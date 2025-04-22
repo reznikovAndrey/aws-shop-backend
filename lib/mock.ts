@@ -43,3 +43,12 @@ export function getProducts(): Promise<Product[]> {
     setTimeout(() => resolve(MOCKED_PRODUCTS), 500);
   });
 }
+
+export function getProduct(id: Product["id"]): Promise<Product | null> {
+  return new Promise((resolve) => {
+    setTimeout(
+      () => resolve(MOCKED_PRODUCTS.find((el) => el.id === id) ?? null),
+      500,
+    );
+  });
+}

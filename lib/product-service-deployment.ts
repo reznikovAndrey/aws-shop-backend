@@ -13,21 +13,45 @@ export class ProductServiceDeployment extends Construct {
       description: "This API serves this Lambda functions",
     });
 
-    const getProductListLambda = new lambda.Function(this, "get-product-list", {
-      runtime: lambda.Runtime.NODEJS_22_X,
-      memorySize: 1024,
-      timeout: cdk.Duration.seconds(5),
-      handler: "handler.getProductList",
-      code: lambda.Code.fromAsset(path.join(__dirname, "./")),
-    });
+    const getProductsListLambda = new lambda.Function(
+      this,
+      "get-products-list",
+      {
+        runtime: lambda.Runtime.NODEJS_22_X,
+        memorySize: 1024,
+        timeout: cdk.Duration.seconds(5),
+        handler: "handler.getProductsList",
+        code: lambda.Code.fromAsset(path.join(__dirname, "./")),
+      },
+    );
 
-    const getProductListLambdaIntegration = new apigateway.LambdaIntegration(
-      getProductListLambda,
+    const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
+      getProductsListLambda,
+      {},
+    );
+
+    const getProductsByIdLambda = new lambda.Function(
+      this,
+      "get-products-by-id",
+      {
+        runtime: lambda.Runtime.NODEJS_22_X,
+        memorySize: 1024,
+        timeout: cdk.Duration.seconds(5),
+        handler: "handler.getProductsById",
+        code: lambda.Code.fromAsset(path.join(__dirname, "./")),
+      },
+    );
+
+    const getProductByIdLambdaIntegration = new apigateway.LambdaIntegration(
+      getProductsByIdLambda,
       {},
     );
 
     const productsResource = api.root.addResource("products");
 
-    productsResource.addMethod("GET", getProductListLambdaIntegration);
+    productsResource.addMethod("GET", getProductsListLambdaIntegration);
+
+    const productByIdResource = productsResource.addResource("{product_id}");
+    productByIdResource.addMethod("GET", getProductByIdLambdaIntegration);
   }
 }
