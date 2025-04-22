@@ -3,11 +3,11 @@
 // import * as AwsShopBackend from '../lib/aws-shop-backend-stack';
 
 // example test. To run these tests, uncomment this file along with the
-// example resource in lib/aws-shop-backend-stack.ts
+// example resource in lib/product-service-stack.ts
 test('SQS Queue Created', () => {
 //   const app = new cdk.App();
 //     // WHEN
-//   const stack = new AwsShopBackend.AwsShopBackendStack(app, 'MyTestStack');
+//   const stack = new AwsShopBackend.ProductServiceStack(app, 'MyTestStack');
 //     // THEN
 //   const template = Template.fromStack(stack);
 
