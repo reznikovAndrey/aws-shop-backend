@@ -11,6 +11,11 @@ export class ProductServiceDeployment extends Construct {
     const api = new apigateway.RestApi(this, "product-service-api", {
       restApiName: "Product Service API gateway",
       description: "This API serves this Lambda functions",
+      defaultCorsPreflightOptions: {
+        // TODO: add frontend app url via env
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: ["GET"],
+      },
     });
 
     const getProductsListLambda = new lambda.Function(
@@ -25,11 +30,6 @@ export class ProductServiceDeployment extends Construct {
       },
     );
 
-    const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
-      getProductsListLambda,
-      {},
-    );
-
     const getProductsByIdLambda = new lambda.Function(
       this,
       "get-products-by-id",
@@ -42,16 +42,94 @@ export class ProductServiceDeployment extends Construct {
       },
     );
 
+    const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
+      getProductsListLambda,
+      {
+        proxy: false,
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseTemplates: { "application/json": "$input.json('$')" },
+            responseParameters: {
+              // TODO: add frontend app url via env
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Content-Type": "'application/json'",
+            },
+          },
+        ],
+      },
+    );
+
     const getProductByIdLambdaIntegration = new apigateway.LambdaIntegration(
       getProductsByIdLambda,
-      {},
+      {
+        proxy: false,
+        requestTemplates: {
+          "application/json": JSON.stringify({
+            productId: "$input.params('product_id')",
+          }),
+        },
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseTemplates: {
+              "application/json": "$input.json('$')",
+            },
+            responseParameters: {
+              // TODO: add frontend app url via env
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Content-Type": "'application/json'",
+            },
+          },
+          {
+            statusCode: "404",
+            selectionPattern: ".*NotFound*.",
+            responseTemplates: {
+              "application/json": JSON.stringify({
+                message: "Product not found",
+              }),
+            },
+            responseParameters: {
+              // TODO: add frontend app url via env
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Content-Type": "'application/json'",
+            },
+          },
+        ],
+      },
     );
 
     const productsResource = api.root.addResource("products");
-
-    productsResource.addMethod("GET", getProductsListLambdaIntegration);
+    productsResource.addMethod("GET", getProductsListLambdaIntegration, {
+      methodResponses: [
+        {
+          statusCode: "200",
+          responseParameters: {
+            "method.response.header.Access-Control-Allow-Origin": true,
+            "method.response.header.Content-Type": true,
+          },
+        },
+      ],
+    });
 
     const productByIdResource = productsResource.addResource("{product_id}");
-    productByIdResource.addMethod("GET", getProductByIdLambdaIntegration);
+    productByIdResource.addMethod("GET", getProductByIdLambdaIntegration, {
+      methodResponses: [
+        {
+          statusCode: "200",
+          responseParameters: {
+            "method.response.header.Access-Control-Allow-Origin": true,
+            "method.response.header.Content-Type": true,
+          },
+        },
+        {
+          statusCode: "404",
+          responseParameters: {
+            "method.response.header.Access-Control-Allow-Origin": true,
+            "method.response.header.Content-Type": true,
+          },
+        },
+      ],
+    });
   }
 }

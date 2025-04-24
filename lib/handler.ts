@@ -1,38 +1,15 @@
-import { APIGatewayEvent } from "aws-lambda";
-
 import { getProduct, getProducts } from "./mock";
-import { Product } from "./types";
 
 export async function getProductsList() {
-  const products = await getProducts();
-
-  return {
-    body: JSON.stringify(products),
-    statusCode: 200,
-    headers: {
-      "Access-Control-Allow-Headers": "Content-type",
-      "Access-Control-Allow-Methods": "GET",
-      // TODO: add url instead of *
-      "Access-Control-Allow-Origin": "*",
-    },
-  };
+  return getProducts();
 }
 
-export async function getProductsById(
-  e: APIGatewayEvent & { productId?: Product["id"] },
-) {
-  const product = await getProduct(
-    e.pathParameters?.["product_id"] ?? e.productId ?? "",
-  );
+export async function getProductsById({ productId }: { productId: string }) {
+  const product = await getProduct(productId);
 
-  return {
-    body: JSON.stringify(product),
-    statusCode: product ? 200 : 404,
-    headers: {
-      "Access-Control-Allow-Headers": "Content-type",
-      "Access-Control-Allow-Methods": "GET",
-      // TODO: add url instead of *
-      "Access-Control-Allow-Origin": "*",
-    },
-  };
+  if (product === null) {
+    throw new Error(`NotFound`);
+  }
+
+  return product;
 }
