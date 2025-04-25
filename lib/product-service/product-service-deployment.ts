@@ -20,7 +20,6 @@ export class ProductServiceDeployment extends Construct {
     });
 
     const getProductsListLambda = this.createLambda("getProductsList");
-
     const getProductsByIdLambda = this.createLambda("getProductsById");
 
     const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
@@ -31,16 +30,11 @@ export class ProductServiceDeployment extends Construct {
           {
             statusCode: "200",
             responseTemplates: { "application/json": "$input.json('$')" },
-            responseParameters: {
-              // TODO: add frontend app url via env
-              "method.response.header.Access-Control-Allow-Origin": "'*'",
-              "method.response.header.Content-Type": "'application/json'",
-            },
+            responseParameters: this.configureIntegrationResponseParameters(),
           },
         ],
       },
     );
-
     const getProductByIdLambdaIntegration = new apigateway.LambdaIntegration(
       getProductsByIdLambda,
       {
@@ -56,11 +50,7 @@ export class ProductServiceDeployment extends Construct {
             responseTemplates: {
               "application/json": "$input.json('$')",
             },
-            responseParameters: {
-              // TODO: add frontend app url via env
-              "method.response.header.Access-Control-Allow-Origin": "'*'",
-              "method.response.header.Content-Type": "'application/json'",
-            },
+            responseParameters: this.configureIntegrationResponseParameters(),
           },
           {
             statusCode: "404",
@@ -70,11 +60,7 @@ export class ProductServiceDeployment extends Construct {
                 message: "Product not found",
               }),
             },
-            responseParameters: {
-              // TODO: add frontend app url via env
-              "method.response.header.Access-Control-Allow-Origin": "'*'",
-              "method.response.header.Content-Type": "'application/json'",
-            },
+            responseParameters: this.configureIntegrationResponseParameters(),
           },
         ],
       },
@@ -85,10 +71,7 @@ export class ProductServiceDeployment extends Construct {
       methodResponses: [
         {
           statusCode: "200",
-          responseParameters: {
-            "method.response.header.Access-Control-Allow-Origin": true,
-            "method.response.header.Content-Type": true,
-          },
+          responseParameters: this.configureMethodResponseParameters(),
         },
       ],
     });
@@ -98,17 +81,11 @@ export class ProductServiceDeployment extends Construct {
       methodResponses: [
         {
           statusCode: "200",
-          responseParameters: {
-            "method.response.header.Access-Control-Allow-Origin": true,
-            "method.response.header.Content-Type": true,
-          },
+          responseParameters: this.configureMethodResponseParameters(),
         },
         {
           statusCode: "404",
-          responseParameters: {
-            "method.response.header.Access-Control-Allow-Origin": true,
-            "method.response.header.Content-Type": true,
-          },
+          responseParameters: this.configureMethodResponseParameters(),
         },
       ],
     });
@@ -122,5 +99,20 @@ export class ProductServiceDeployment extends Construct {
       handler: `index.${name}`,
       code: lambda.Code.fromAsset(path.join(__dirname, LAMBDA_FOLDER_PATH)),
     });
+  }
+
+  private configureIntegrationResponseParameters(): apigateway.IntegrationResponse["responseParameters"] {
+    return {
+      // TODO: add frontend app url via env
+      "method.response.header.Access-Control-Allow-Origin": "'*'",
+      "method.response.header.Content-Type": "'application/json'",
+    };
+  }
+
+  private configureMethodResponseParameters(): apigateway.MethodResponse["responseParameters"] {
+    return {
+      "method.response.header.Access-Control-Allow-Origin": true,
+      "method.response.header.Content-Type": true,
+    };
   }
 }
