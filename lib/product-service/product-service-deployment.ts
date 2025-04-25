@@ -3,6 +3,7 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
+import { LAMBDA_FOLDER_PATH } from "./constant";
 
 export class ProductServiceDeployment extends Construct {
   constructor(scope: Construct, id: string) {
@@ -18,29 +19,9 @@ export class ProductServiceDeployment extends Construct {
       },
     });
 
-    const getProductsListLambda = new lambda.Function(
-      this,
-      "get-products-list",
-      {
-        runtime: lambda.Runtime.NODEJS_22_X,
-        memorySize: 1024,
-        timeout: cdk.Duration.seconds(5),
-        handler: "handler.getProductsList",
-        code: lambda.Code.fromAsset(path.join(__dirname, "./")),
-      },
-    );
+    const getProductsListLambda = this.createLambda("getProductsList");
 
-    const getProductsByIdLambda = new lambda.Function(
-      this,
-      "get-products-by-id",
-      {
-        runtime: lambda.Runtime.NODEJS_22_X,
-        memorySize: 1024,
-        timeout: cdk.Duration.seconds(5),
-        handler: "handler.getProductsById",
-        code: lambda.Code.fromAsset(path.join(__dirname, "./")),
-      },
-    );
+    const getProductsByIdLambda = this.createLambda("getProductsById");
 
     const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
       getProductsListLambda,
@@ -130,6 +111,16 @@ export class ProductServiceDeployment extends Construct {
           },
         },
       ],
+    });
+  }
+
+  private createLambda(name: string) {
+    return new lambda.Function(this, name, {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      memorySize: 1024,
+      timeout: cdk.Duration.seconds(5),
+      handler: `index.${name}`,
+      code: lambda.Code.fromAsset(path.join(__dirname, LAMBDA_FOLDER_PATH)),
     });
   }
 }
