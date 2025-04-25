@@ -1,5 +1,6 @@
 import { getProduct } from "../mock";
 import { Product } from "../types";
+import { NOT_FOUND } from "../constant";
 
 export async function getProductsById({
   productId,
@@ -9,7 +10,7 @@ export async function getProductsById({
   const product = await getProduct(productId);
 
   if (product === null) {
-    throw new Error(`NotFound`);
+    throw new Error(NOT_FOUND);
   }
 
   return product;

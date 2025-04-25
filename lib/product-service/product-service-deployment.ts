@@ -3,7 +3,8 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
-import { LAMBDA_FOLDER_PATH } from "./constant";
+import { LAMBDA_FOLDER_PATH, PRODUCT_ID_KEY } from "./constant";
+import { NOT_FOUND } from "./lambda/constant";
 
 export class ProductServiceDeployment extends Construct {
   constructor(scope: Construct, id: string) {
@@ -41,7 +42,7 @@ export class ProductServiceDeployment extends Construct {
         proxy: false,
         requestTemplates: {
           "application/json": JSON.stringify({
-            productId: "$input.params('product_id')",
+            productId: `$input.params('${PRODUCT_ID_KEY}')`,
           }),
         },
         integrationResponses: [
@@ -54,7 +55,7 @@ export class ProductServiceDeployment extends Construct {
           },
           {
             statusCode: "404",
-            selectionPattern: ".*NotFound*.",
+            selectionPattern: `.*${NOT_FOUND}*.`,
             responseTemplates: {
               "application/json": JSON.stringify({
                 message: "Product not found",
@@ -76,7 +77,9 @@ export class ProductServiceDeployment extends Construct {
       ],
     });
 
-    const productByIdResource = productsResource.addResource("{product_id}");
+    const productByIdResource = productsResource.addResource(
+      `{${PRODUCT_ID_KEY}}`,
+    );
     productByIdResource.addMethod("GET", getProductByIdLambdaIntegration, {
       methodResponses: [
         {
