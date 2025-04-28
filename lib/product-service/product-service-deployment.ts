@@ -14,7 +14,6 @@ export class ProductServiceDeployment extends Construct {
       restApiName: "Product Service API gateway",
       description: "This API serves this Lambda functions",
       defaultCorsPreflightOptions: {
-        // TODO: add frontend app url via env
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: ["GET"],
       },
@@ -106,7 +105,6 @@ export class ProductServiceDeployment extends Construct {
 
   private configureIntegrationResponseParameters(): apigateway.IntegrationResponse["responseParameters"] {
     return {
-      // TODO: add frontend app url via env
       "method.response.header.Access-Control-Allow-Origin": "'*'",
       "method.response.header.Content-Type": "'application/json'",
     };
