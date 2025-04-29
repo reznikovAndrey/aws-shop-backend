@@ -8,6 +8,3 @@ node_modules
 cdk.out
 
 .idea
-
-# build directory
-dist

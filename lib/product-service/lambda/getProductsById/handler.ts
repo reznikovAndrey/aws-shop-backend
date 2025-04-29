@@ -1,6 +1,6 @@
-import { getProduct } from "../mock";
-import { Product } from "../types";
-import { NOT_FOUND } from "../constant";
+import { getProduct } from "../shared/mock";
+import { Product } from "../shared/types";
+import { NOT_FOUND } from "../shared/constant";
 
 export async function getProductsById({
   productId,

@@ -1,10 +1,11 @@
 import { Construct } from "constructs";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
+import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
 import { LAMBDA_FOLDER_PATH, PRODUCT_ID_KEY } from "./constant";
-import { NOT_FOUND } from "./lambda/constant";
+import { NOT_FOUND } from "./lambda/shared/constant";
 
 export class ProductServiceDeployment extends Construct {
   constructor(scope: Construct, id: string) {
@@ -94,12 +95,12 @@ export class ProductServiceDeployment extends Construct {
   }
 
   private createLambda(name: string) {
-    return new lambda.Function(this, name, {
+    return new lambdaNodejs.NodejsFunction(this, name, {
       runtime: lambda.Runtime.NODEJS_22_X,
       memorySize: 1024,
       timeout: cdk.Duration.seconds(5),
-      handler: `index.${name}`,
-      code: lambda.Code.fromAsset(path.join(__dirname, LAMBDA_FOLDER_PATH)),
+      handler: name,
+      entry: path.join(__dirname, LAMBDA_FOLDER_PATH, name, "handler.ts"),
     });
   }
 
