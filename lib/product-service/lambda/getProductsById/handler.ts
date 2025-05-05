@@ -1,17 +1,58 @@
-import { getProduct } from "../shared/mock";
+import { GetItemCommand } from "@aws-sdk/client-dynamodb";
 import { Product } from "../shared/types";
-import { NOT_FOUND } from "../shared/constant";
+import {
+  getDynamoDBClient,
+  normalizeProductData,
+  normalizeStockData,
+} from "../shared/utils";
+import { mergeData } from "./utils";
+import { NOT_FOUND, SERVER_ERROR } from "../shared/constant";
+
+const client = getDynamoDBClient();
 
 export async function getProductsById({
   productId,
 }: {
   productId: Product["id"];
 }) {
-  const product = await getProduct(productId);
+  try {
+    const commandToProductsTable = new GetItemCommand({
+      TableName: process.env.PRODUCTS_TABLE_NAME,
+      Key: {
+        id: { S: productId },
+      },
+    });
 
-  if (product === null) {
-    throw new Error(NOT_FOUND);
+    const commandToStocksTable = new GetItemCommand({
+      TableName: process.env.STOCKS_TABLE_NAME,
+      Key: {
+        product_id: { S: productId },
+      },
+    });
+
+    const [productRes, stockRes] = await Promise.all([
+      client.send(commandToProductsTable),
+      client.send(commandToStocksTable),
+    ]);
+
+    const productItem = normalizeProductData(productRes.Item);
+    const stockItem = normalizeStockData(stockRes.Item);
+
+    const product = mergeData(productItem, stockItem);
+
+    if (!product) {
+      throw new Error(NOT_FOUND);
+    }
+
+    return product;
+  } catch (err) {
+    console.error(err);
+
+    // @ts-expect-error
+    if (err?.message === NOT_FOUND) {
+      throw new Error(NOT_FOUND);
+    }
+
+    throw new Error(SERVER_ERROR);
   }
-
-  return product;
 }

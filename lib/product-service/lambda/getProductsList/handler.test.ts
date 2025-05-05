@@ -12,10 +12,6 @@ describe("getProductsList", () => {
   });
 
   it("should return server error in case of unexpected error", async () => {
-    (utils.getDynamoDBClient as jest.Mock).mockImplementation(() => {
-      throw new Error();
-    });
-
     expect(getProductsList()).rejects.toThrow(SERVER_ERROR);
   });
 });

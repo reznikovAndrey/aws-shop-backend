@@ -1,7 +1,12 @@
-import { getDynamoDBClient } from "../shared/utils";
 import { ScanCommand } from "@aws-sdk/client-dynamodb";
-import { mergeData, normalizeProductsData, normalizeStocksData } from "./utils";
+import {
+  getDynamoDBClient,
+  normalizeProductData,
+  normalizeStockData,
+} from "../shared/utils";
+import { mergeData } from "./utils";
 import { SERVER_ERROR } from "../shared/constant";
+import { ProductDTO, StockDTO } from "../../types";
 
 const client = getDynamoDBClient();
 
@@ -16,8 +21,11 @@ export async function getProductsList() {
       ),
     ]);
 
-    const productsData = normalizeProductsData(productsRes.Items);
-    const stocksData = normalizeStocksData(stocksRes.Items);
+    const productsData = (productsRes?.Items?.map(normalizeProductData) ??
+      []) as ProductDTO[];
+
+    const stocksData = (stocksRes?.Items?.map(normalizeStockData) ??
+      []) as StockDTO[];
 
     return mergeData(productsData, stocksData);
   } catch (err) {
