@@ -38,6 +38,7 @@ export class ProductServiceDeployment extends Construct {
 
     const getProductsListLambda = this.createLambda("getProductsList");
     const getProductsByIdLambda = this.createLambda("getProductsById");
+    const createProductLambda = this.createLambda("createProduct");
 
     const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
       getProductsListLambda,
@@ -92,6 +93,22 @@ export class ProductServiceDeployment extends Construct {
         ],
       },
     );
+    const createProductLambdaIntegration = new apigateway.LambdaIntegration(
+      createProductLambda,
+      {
+        proxy: false,
+        requestTemplates: {
+          "application/json": "$input.body",
+        },
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseTemplates: { "application/json": "$input.json('$')" },
+            responseParameters: this.configureIntegrationResponseParameters(),
+          },
+        ],
+      },
+    );
 
     const productsResource = api.root.addResource("products");
     productsResource.addMethod("GET", getProductsListLambdaIntegration, {
@@ -102,6 +119,14 @@ export class ProductServiceDeployment extends Construct {
         },
         {
           statusCode: "500",
+          responseParameters: this.configureMethodResponseParameters(),
+        },
+      ],
+    });
+    productsResource.addMethod("POST", createProductLambdaIntegration, {
+      methodResponses: [
+        {
+          statusCode: "200",
           responseParameters: this.configureMethodResponseParameters(),
         },
       ],
