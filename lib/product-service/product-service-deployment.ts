@@ -2,14 +2,30 @@ import { Construct } from "constructs";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
 import { LAMBDA_FOLDER_PATH, PRODUCT_ID_KEY } from "./constant";
-import { NOT_FOUND } from "./lambda/shared/constant";
+import { NOT_FOUND, SERVER_ERROR } from "./lambda/shared/constant";
 
 export class ProductServiceDeployment extends Construct {
+  productsTable: dynamodb.ITable;
+  stocksTable: dynamodb.ITable;
+
   constructor(scope: Construct, id: string) {
     super(scope, id);
+
+    this.productsTable = dynamodb.Table.fromTableName(
+      this,
+      "ImportedProductsTable",
+      process.env.PRODUCTS_TABLE_NAME as string,
+    );
+
+    this.stocksTable = dynamodb.Table.fromTableName(
+      this,
+      "ImportedStocksTable",
+      process.env.STOCKS_TABLE_NAME as string,
+    );
 
     const api = new apigateway.RestApi(this, "product-service-api", {
       restApiName: "Product Service API gateway",
@@ -31,6 +47,16 @@ export class ProductServiceDeployment extends Construct {
           {
             statusCode: "200",
             responseTemplates: { "application/json": "$input.json('$')" },
+            responseParameters: this.configureIntegrationResponseParameters(),
+          },
+          {
+            statusCode: "500",
+            selectionPattern: `.*${SERVER_ERROR}*.`,
+            responseTemplates: {
+              "application/json": JSON.stringify({
+                message: "Server error",
+              }),
+            },
             responseParameters: this.configureIntegrationResponseParameters(),
           },
         ],
@@ -74,6 +100,10 @@ export class ProductServiceDeployment extends Construct {
           statusCode: "200",
           responseParameters: this.configureMethodResponseParameters(),
         },
+        {
+          statusCode: "500",
+          responseParameters: this.configureMethodResponseParameters(),
+        },
       ],
     });
 
@@ -95,13 +125,22 @@ export class ProductServiceDeployment extends Construct {
   }
 
   private createLambda(name: string) {
-    return new lambdaNodejs.NodejsFunction(this, name, {
+    const lambdaFn = new lambdaNodejs.NodejsFunction(this, name, {
       runtime: lambda.Runtime.NODEJS_22_X,
       memorySize: 1024,
       timeout: cdk.Duration.seconds(5),
       handler: name,
       entry: path.join(__dirname, LAMBDA_FOLDER_PATH, name, "handler.ts"),
+      environment: {
+        PRODUCTS_TABLE_NAME: process.env.PRODUCTS_TABLE_NAME as string,
+        STOCKS_TABLE_NAME: process.env.STOCKS_TABLE_NAME as string,
+      },
     });
+
+    this.productsTable.grantReadWriteData(lambdaFn);
+    this.stocksTable.grantReadWriteData(lambdaFn);
+
+    return lambdaFn;
   }
 
   private configureIntegrationResponseParameters(): apigateway.IntegrationResponse["responseParameters"] {

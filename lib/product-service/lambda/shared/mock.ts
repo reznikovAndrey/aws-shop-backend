@@ -38,12 +38,6 @@ export const MOCKED_PRODUCTS: Product[] = [
   },
 ];
 
-export function getProducts(): Promise<Product[]> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCKED_PRODUCTS), 500);
-  });
-}
-
 export function getProduct(id: Product["id"]): Promise<Product | null> {
   return new Promise((resolve) => {
     setTimeout(
