@@ -1,54 +1,42 @@
-import { Product } from "./types";
+import { ProductDTO, StockDTO } from "./types";
+import { v4 } from "uuid";
 
-export const MOCKED_PRODUCTS: Product[] = [
+export const PRODUCT_LIST_MOCK: ProductDTO[] = [
   {
-    id: "1",
+    id: v4(),
     title: "Wireless Headphones",
     description: "Noise-cancelling over-ear wireless headphones.",
     price: 129.99,
-    count: 15,
   },
   {
-    id: "2",
+    id: v4(),
     title: "Mechanical Keyboard",
     description: "RGB backlit mechanical keyboard with blue switches.",
     price: 89.5,
-    count: 30,
   },
   {
-    id: "3",
+    id: v4(),
     title: "Gaming Mouse",
     description: "Ergonomic gaming mouse with customizable DPI.",
     price: 49.99,
-    count: 25,
   },
   {
-    id: "4",
+    id: v4(),
     title: "4K Monitor",
     description: "27-inch 4K UHD monitor with HDR support.",
     price: 299.99,
-    count: 10,
   },
   {
-    id: "5",
+    id: v4(),
     title: "USB-C Hub",
     description: "7-in-1 USB-C hub with HDMI, USB 3.0, and card reader.",
     price: 39.99,
-    count: 50,
   },
 ];
 
-export function getProducts(): Promise<Product[]> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCKED_PRODUCTS), 500);
-  });
-}
-
-export function getProduct(id: Product["id"]): Promise<Product | null> {
-  return new Promise((resolve) => {
-    setTimeout(
-      () => resolve(MOCKED_PRODUCTS.find((el) => el.id === id) ?? null),
-      500,
-    );
-  });
-}
+export const STOCKS_LIST_MOCK: StockDTO[] = PRODUCT_LIST_MOCK.map(
+  ({ id }, i) => ({
+    product_id: id,
+    count: i + 1,
+  }),
+);
