@@ -15,6 +15,7 @@ import {
 export class ProductServiceDeployment extends Construct {
   productsTable: dynamodb.ITable;
   stocksTable: dynamodb.ITable;
+  api: apigateway.RestApi;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -31,7 +32,7 @@ export class ProductServiceDeployment extends Construct {
       process.env.STOCKS_TABLE_NAME as string,
     );
 
-    const api = new apigateway.RestApi(this, "product-service-api", {
+    this.api = new apigateway.RestApi(this, "product-service-api", {
       restApiName: "Product Service API gateway",
       description: "This API serves this Lambda functions",
       defaultCorsPreflightOptions: {
@@ -49,21 +50,8 @@ export class ProductServiceDeployment extends Construct {
       {
         proxy: false,
         integrationResponses: [
-          {
-            statusCode: "200",
-            responseTemplates: { "application/json": "$input.json('$')" },
-            responseParameters: this.configureIntegrationResponseParameters(),
-          },
-          {
-            statusCode: "500",
-            selectionPattern: `.*${SERVER_ERROR}*.`,
-            responseTemplates: {
-              "application/json": JSON.stringify({
-                message: "Server error",
-              }),
-            },
-            responseParameters: this.configureIntegrationResponseParameters(),
-          },
+          this.configureIntegrationResponseHTTP200(),
+          this.configureIntegrationResponseHTTP500(),
         ],
       },
     );
@@ -77,13 +65,7 @@ export class ProductServiceDeployment extends Construct {
           }),
         },
         integrationResponses: [
-          {
-            statusCode: "200",
-            responseTemplates: {
-              "application/json": "$input.json('$')",
-            },
-            responseParameters: this.configureIntegrationResponseParameters(),
-          },
+          this.configureIntegrationResponseHTTP200(),
           {
             statusCode: "404",
             selectionPattern: `.*${NOT_FOUND}*.`,
@@ -94,16 +76,7 @@ export class ProductServiceDeployment extends Construct {
             },
             responseParameters: this.configureIntegrationResponseParameters(),
           },
-          {
-            statusCode: "500",
-            selectionPattern: `.*${SERVER_ERROR}*.`,
-            responseTemplates: {
-              "application/json": JSON.stringify({
-                message: "Server error",
-              }),
-            },
-            responseParameters: this.configureIntegrationResponseParameters(),
-          },
+          this.configureIntegrationResponseHTTP500(),
         ],
       },
     );
@@ -115,11 +88,7 @@ export class ProductServiceDeployment extends Construct {
           "application/json": "$input.body",
         },
         integrationResponses: [
-          {
-            statusCode: "200",
-            responseTemplates: { "application/json": "$input.json('$')" },
-            responseParameters: this.configureIntegrationResponseParameters(),
-          },
+          this.configureIntegrationResponseHTTP200(),
           {
             statusCode: "400",
             selectionPattern: `.*${INVALID_PAYLOAD}*.`,
@@ -129,47 +98,26 @@ export class ProductServiceDeployment extends Construct {
               }),
             },
           },
-          {
-            statusCode: "500",
-            selectionPattern: `.*${SERVER_ERROR}*.`,
-            responseTemplates: {
-              "application/json": JSON.stringify({
-                message: "Server error",
-              }),
-            },
-            responseParameters: this.configureIntegrationResponseParameters(),
-          },
+          this.configureIntegrationResponseHTTP500(),
         ],
       },
     );
 
-    const productsResource = api.root.addResource("products");
+    const productsResource = this.api.root.addResource("products");
     productsResource.addMethod("GET", getProductsListLambdaIntegration, {
       methodResponses: [
-        {
-          statusCode: "200",
-          responseParameters: this.configureMethodResponseParameters(),
-        },
-        {
-          statusCode: "500",
-          responseParameters: this.configureMethodResponseParameters(),
-        },
+        this.configureMethodResponseHTTP200(),
+        this.configureMethodResponseHTTP500(),
       ],
     });
     productsResource.addMethod("POST", createProductLambdaIntegration, {
       methodResponses: [
-        {
-          statusCode: "200",
-          responseParameters: this.configureMethodResponseParameters(),
-        },
+        this.configureMethodResponseHTTP200(),
         {
           statusCode: "400",
           responseParameters: this.configureMethodResponseParameters(),
         },
-        {
-          statusCode: "500",
-          responseParameters: this.configureMethodResponseParameters(),
-        },
+        this.configureMethodResponseHTTP500(),
       ],
     });
 
@@ -178,18 +126,12 @@ export class ProductServiceDeployment extends Construct {
     );
     productByIdResource.addMethod("GET", getProductByIdLambdaIntegration, {
       methodResponses: [
-        {
-          statusCode: "200",
-          responseParameters: this.configureMethodResponseParameters(),
-        },
+        this.configureMethodResponseHTTP200(),
         {
           statusCode: "404",
           responseParameters: this.configureMethodResponseParameters(),
         },
-        {
-          statusCode: "500",
-          responseParameters: this.configureMethodResponseParameters(),
-        },
+        this.configureMethodResponseHTTP500(),
       ],
     });
   }
@@ -211,6 +153,41 @@ export class ProductServiceDeployment extends Construct {
     this.stocksTable.grantReadWriteData(lambdaFn);
 
     return lambdaFn;
+  }
+
+  private configureIntegrationResponseHTTP200(): apigateway.IntegrationResponse {
+    return {
+      statusCode: "200",
+      responseTemplates: { "application/json": "$input.json('$')" },
+      responseParameters: this.configureIntegrationResponseParameters(),
+    };
+  }
+
+  private configureIntegrationResponseHTTP500(): apigateway.IntegrationResponse {
+    return {
+      statusCode: "500",
+      selectionPattern: `.*${SERVER_ERROR}*.`,
+      responseTemplates: {
+        "application/json": JSON.stringify({
+          message: "Server error",
+        }),
+      },
+      responseParameters: this.configureIntegrationResponseParameters(),
+    };
+  }
+
+  private configureMethodResponseHTTP200(): apigateway.MethodResponse {
+    return {
+      statusCode: "200",
+      responseParameters: this.configureMethodResponseParameters(),
+    };
+  }
+
+  private configureMethodResponseHTTP500(): apigateway.MethodResponse {
+    return {
+      statusCode: "500",
+      responseParameters: this.configureMethodResponseParameters(),
+    };
   }
 
   private configureIntegrationResponseParameters(): apigateway.IntegrationResponse["responseParameters"] {
