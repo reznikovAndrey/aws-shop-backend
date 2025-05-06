@@ -1,5 +1,4 @@
 import { getProductsList } from "./handler";
-import * as utils from "../shared/utils";
 import { SERVER_ERROR } from "../shared/constant";
 
 jest.mock("../shared/utils", () => ({
@@ -8,6 +7,6 @@ jest.mock("../shared/utils", () => ({
 
 describe("getProductsList", () => {
   it("should return server error in case of unexpected error", async () => {
-    expect(getProductsList()).rejects.toThrow(SERVER_ERROR);
+    expect(getProductsList({})).rejects.toThrow(SERVER_ERROR);
   });
 });
