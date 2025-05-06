@@ -1,35 +1,23 @@
 import { NOT_FOUND, SERVER_ERROR } from "../shared/constant";
-import * as sharedUtils from "../shared/utils";
-import * as lambdaUtils from "./utils";
 import { getProductsById } from "./handler";
+import * as sharedUtils from "../shared/utils";
 
 jest.mock("../shared/utils", () => ({
-  getDynamoDBClient: jest.fn(),
-}));
-
-jest.mock("./utils", () => ({
-  mergeData: jest.fn(),
+  __esModule: true,
+  ...jest.requireActual("../shared/utils"),
+  getDynamoDBClient: jest.fn().mockReturnValue({ send: jest.fn() }),
 }));
 
 describe("getProductById", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("should return server error in case of unexpected error", async () => {
+  it("should return unexpected error", async () => {
     expect(getProductsById({ productId: "1" })).rejects.toThrow(SERVER_ERROR);
   });
 
-  // TODO: fix
-  // it("should return not found error if product was not found", async () => {
-  //   (sharedUtils.getDynamoDBClient as jest.Mock).mockReturnValueOnce({
-  //     send: jest.fn(),
-  //   });
-  //
-  //   (lambdaUtils.mergeData as jest.Mock).mockImplementation(() => {
-  //     throw new Error(NOT_FOUND);
-  //   });
-  //
-  //   expect(getProductsById({ productId: "1" })).rejects.toThrow(NOT_FOUND);
-  // });
+  it("should return not found error", async () => {
+    (sharedUtils.getDynamoDBClient().send as jest.Mock).mockReturnValue({
+      Item: null,
+    });
+
+    expect(getProductsById({ productId: "1" })).rejects.toThrow(NOT_FOUND);
+  });
 });
