@@ -1,18 +1,21 @@
 import { PutItemCommand } from "@aws-sdk/client-dynamodb";
 import { v4 } from "uuid";
 import { getDynamoDBClient } from "../shared/utils";
-import { ProductCreatePayload } from "./types";
-import { SERVER_ERROR } from "../shared/constant";
+import { INVALID_PAYLOAD, SERVER_ERROR } from "../shared/constant";
+import { isPayloadValid } from "./utils.";
 
 const client = getDynamoDBClient();
 
-// TODO: add tests
-export async function createProduct(payload: ProductCreatePayload) {
+export async function createProduct(payload: unknown) {
   const productId = v4();
 
-  // TODO: add validation
-
   try {
+    const isValid = isPayloadValid(payload);
+
+    if (!isValid) {
+      throw new Error(INVALID_PAYLOAD);
+    }
+
     const productsTableCommand = new PutItemCommand({
       TableName: process.env.PRODUCTS_TABLE_NAME,
       Item: {
@@ -38,6 +41,12 @@ export async function createProduct(payload: ProductCreatePayload) {
     return { productId };
   } catch (err) {
     console.error(err);
+
+    // @ts-expect-error
+    if (err?.message === INVALID_PAYLOAD) {
+      throw new Error(INVALID_PAYLOAD);
+    }
+
     throw new Error(SERVER_ERROR);
   }
 }

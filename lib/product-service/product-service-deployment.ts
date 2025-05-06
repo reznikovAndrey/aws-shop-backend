@@ -6,7 +6,11 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
 import { LAMBDA_FOLDER_PATH, PRODUCT_ID_KEY } from "./constant";
-import { NOT_FOUND, SERVER_ERROR } from "./lambda/shared/constant";
+import {
+  INVALID_PAYLOAD,
+  NOT_FOUND,
+  SERVER_ERROR,
+} from "./lambda/shared/constant";
 
 export class ProductServiceDeployment extends Construct {
   productsTable: dynamodb.ITable;
@@ -106,6 +110,15 @@ export class ProductServiceDeployment extends Construct {
             responseTemplates: { "application/json": "$input.json('$')" },
             responseParameters: this.configureIntegrationResponseParameters(),
           },
+          {
+            statusCode: "400",
+            selectionPattern: `.*${INVALID_PAYLOAD}*.`,
+            responseTemplates: {
+              "application/json": JSON.stringify({
+                message: "Invalid payload",
+              }),
+            },
+          },
         ],
       },
     );
@@ -127,6 +140,10 @@ export class ProductServiceDeployment extends Construct {
       methodResponses: [
         {
           statusCode: "200",
+          responseParameters: this.configureMethodResponseParameters(),
+        },
+        {
+          statusCode: "400",
           responseParameters: this.configureMethodResponseParameters(),
         },
       ],
