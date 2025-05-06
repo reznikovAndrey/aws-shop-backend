@@ -10,7 +10,9 @@ import { ProductDTO, StockDTO } from "../../types";
 
 const client = getDynamoDBClient();
 
-export async function getProductsList() {
+export async function getProductsList(e: unknown) {
+  console.log("getProductsList", e);
+
   try {
     const [productsRes, stocksRes] = await Promise.all([
       client.send(

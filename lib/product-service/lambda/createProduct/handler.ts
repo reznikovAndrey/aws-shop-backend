@@ -9,6 +9,8 @@ const client = getDynamoDBClient();
 export async function createProduct(payload: unknown) {
   const productId = v4();
 
+  console.log("createProduct request", payload);
+
   try {
     const isValid = isPayloadValid(payload);
 

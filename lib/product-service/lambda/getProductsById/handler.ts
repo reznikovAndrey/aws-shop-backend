@@ -15,6 +15,8 @@ export async function getProductsById({
 }: {
   productId: Product["id"];
 }) {
+  console.log("getProductsById request", productId);
+
   try {
     const commandToProductsTable = new GetItemCommand({
       TableName: process.env.PRODUCTS_TABLE_NAME,
