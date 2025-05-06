@@ -7,10 +7,6 @@ jest.mock("../shared/utils", () => ({
 }));
 
 describe("getProductsList", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
   it("should return server error in case of unexpected error", async () => {
     expect(getProductsList()).rejects.toThrow(SERVER_ERROR);
   });
