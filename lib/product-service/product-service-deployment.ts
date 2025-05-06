@@ -94,6 +94,16 @@ export class ProductServiceDeployment extends Construct {
             },
             responseParameters: this.configureIntegrationResponseParameters(),
           },
+          {
+            statusCode: "500",
+            selectionPattern: `.*${SERVER_ERROR}*.`,
+            responseTemplates: {
+              "application/json": JSON.stringify({
+                message: "Server error",
+              }),
+            },
+            responseParameters: this.configureIntegrationResponseParameters(),
+          },
         ],
       },
     );
@@ -118,6 +128,16 @@ export class ProductServiceDeployment extends Construct {
                 message: "Invalid payload",
               }),
             },
+          },
+          {
+            statusCode: "500",
+            selectionPattern: `.*${SERVER_ERROR}*.`,
+            responseTemplates: {
+              "application/json": JSON.stringify({
+                message: "Server error",
+              }),
+            },
+            responseParameters: this.configureIntegrationResponseParameters(),
           },
         ],
       },
@@ -146,6 +166,10 @@ export class ProductServiceDeployment extends Construct {
           statusCode: "400",
           responseParameters: this.configureMethodResponseParameters(),
         },
+        {
+          statusCode: "500",
+          responseParameters: this.configureMethodResponseParameters(),
+        },
       ],
     });
 
@@ -160,6 +184,10 @@ export class ProductServiceDeployment extends Construct {
         },
         {
           statusCode: "404",
+          responseParameters: this.configureMethodResponseParameters(),
+        },
+        {
+          statusCode: "500",
           responseParameters: this.configureMethodResponseParameters(),
         },
       ],
