@@ -1,7 +1,3 @@
-export type Product = {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  count: number;
-};
+import { ProductDTO, StockDTO } from "../../types";
+
+export type Product = ProductDTO & Pick<StockDTO, "count">;
