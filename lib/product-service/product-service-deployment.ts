@@ -37,7 +37,7 @@ export class ProductServiceDeployment extends Construct {
       description: "This API serves this Lambda functions",
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: ["GET"],
+        allowMethods: ["GET", "POST"],
       },
     });
 
