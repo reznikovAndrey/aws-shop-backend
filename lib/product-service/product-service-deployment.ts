@@ -5,12 +5,13 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
-import { LAMBDA_FOLDER_PATH, PRODUCT_ID_KEY } from "./constant";
+import { PRODUCT_ID_KEY } from "./constant";
 import {
   INVALID_PAYLOAD,
   NOT_FOUND,
   SERVER_ERROR,
 } from "./lambda/shared/constant";
+import { LAMBDA_FOLDER_PATH } from "../shared/constant";
 
 export class ProductServiceDeployment extends Construct {
   productsTable: dynamodb.ITable;
