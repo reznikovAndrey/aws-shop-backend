@@ -5,6 +5,7 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3n from "aws-cdk-lib/aws-s3-notifications";
+import * as s3Deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as path from "path";
 import { FILENAME_KEY } from "./constant";
 import { LAMBDA_FOLDER_PATH } from "../shared/constant";
@@ -28,6 +29,12 @@ export class ImportServiceDeployment extends Construct {
         },
       ],
       versioned: true,
+    });
+
+    new s3Deploy.BucketDeployment(this, "import-service-bucket-deployment", {
+      destinationBucket: bucket,
+      destinationKeyPrefix: `${FILES_UPLOAD_DIR_NAME}/`,
+      sources: [s3Deploy.Source.data(".keep", "")],
     });
 
     this.api = new apigateway.RestApi(this, "import-service-api", {
