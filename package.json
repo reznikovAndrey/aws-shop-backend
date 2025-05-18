@@ -9,7 +9,10 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "seed": "ts-node ./lib/product-service/seed.ts"
+    "seed": "ts-node ./lib/product-service/seed.ts",
+    "deploy:all": "cdk deploy --all",
+    "deploy:product-service": "cdk deploy ProductServiceStack",
+    "deploy:import-service": "cdk deploy ImportServiceStack"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
