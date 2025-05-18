@@ -1,6 +1,6 @@
 import { S3Event } from "aws-lambda";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import * as csvParser from "csv-parser";
+import csvParser from "csv-parser";
 import { getS3Client } from "../shared/utils";
 import { SERVER_ERROR } from "../shared/constant";
 import { Readable } from "node:stream";
