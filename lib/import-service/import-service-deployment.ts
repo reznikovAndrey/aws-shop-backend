@@ -4,9 +4,11 @@ import * as cdk from "aws-cdk-lib";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import * as path from "path";
 import { FILENAME_KEY } from "./constant";
 import { LAMBDA_FOLDER_PATH } from "../shared/constant";
+import { FILES_UPLOAD_DIR_NAME } from "./lambda/importProductsFile/constant";
 
 export class ImportServiceDeployment extends Construct {
   api: apigateway.RestApi;
@@ -91,5 +93,29 @@ export class ImportServiceDeployment extends Construct {
     });
 
     bucket.grantPut(importProductsFileLambda);
+
+    const importFileParserLambda = new lambdaNodejs.NodejsFunction(
+      this,
+      "importFileParser",
+      {
+        runtime: lambda.Runtime.NODEJS_22_X,
+        memorySize: 1024,
+        timeout: cdk.Duration.seconds(5),
+        handler: "importFileParser",
+        entry: path.join(
+          __dirname,
+          LAMBDA_FOLDER_PATH,
+          "importFileParser",
+          "handler.ts",
+        ),
+      },
+    );
+
+    bucket.grantRead(importFileParserLambda);
+    bucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
+      new s3n.LambdaDestination(importFileParserLambda),
+      { prefix: `${FILES_UPLOAD_DIR_NAME}/` },
+    );
   }
 }
