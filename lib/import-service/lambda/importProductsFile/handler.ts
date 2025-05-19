@@ -1,19 +1,14 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import {
-  FILES_UPLOAD_DIR_NAME,
-  MISSING_FILENAME_ERROR,
-  SIGNED_URL_VALID_TIME_RANGE,
-} from "./constant";
-import { SERVER_ERROR } from "../shared/constant";
+import { FILES_UPLOAD_DIR_NAME, SIGNED_URL_VALID_TIME_RANGE } from "./constant";
 import { getS3Client } from "../shared/utils";
+import { BadRequestError, ServerError } from "../../../shared/error";
 
 const client = getS3Client();
 
-// TODO: configure rest api for error responses
 export async function importProductsFile({ fileName }: { fileName?: string }) {
   if (!fileName) {
-    throw new Error(MISSING_FILENAME_ERROR);
+    throw new BadRequestError("Missing filename");
   }
 
   try {
@@ -27,6 +22,6 @@ export async function importProductsFile({ fileName }: { fileName?: string }) {
     });
   } catch (err) {
     console.error(err);
-    throw new Error(SERVER_ERROR);
+    throw new ServerError();
   }
 }

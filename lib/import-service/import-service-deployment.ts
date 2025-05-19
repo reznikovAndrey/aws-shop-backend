@@ -10,6 +10,7 @@ import * as path from "path";
 import { FILENAME_KEY } from "./constant";
 import { LAMBDA_FOLDER_PATH } from "../shared/constant";
 import { FILES_UPLOAD_DIR_NAME } from "./lambda/importProductsFile/constant";
+import { ApiErrors } from "../shared/error";
 
 export class ImportServiceDeployment extends Construct {
   api: apigateway.RestApi;
@@ -83,6 +84,19 @@ export class ImportServiceDeployment extends Construct {
               "method.response.header.Content-Type": "'application/json'",
             },
           },
+          {
+            statusCode: "400",
+            selectionPattern: `${ApiErrors.BAD_REQUEST}*.`,
+            responseTemplates: {
+              "application/json": JSON.stringify({
+                error: "Bad request: $input.path('$.errorMessage')",
+              }),
+            },
+            responseParameters: {
+              "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Content-Type": "'application/json'",
+            },
+          },
         ],
       });
 
@@ -91,6 +105,13 @@ export class ImportServiceDeployment extends Construct {
       methodResponses: [
         {
           statusCode: "200",
+          responseParameters: {
+            "method.response.header.Access-Control-Allow-Origin": true,
+            "method.response.header.Content-Type": true,
+          },
+        },
+        {
+          statusCode: "400",
           responseParameters: {
             "method.response.header.Access-Control-Allow-Origin": true,
             "method.response.header.Content-Type": true,

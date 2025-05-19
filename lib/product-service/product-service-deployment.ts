@@ -13,6 +13,7 @@ import {
 } from "./lambda/shared/constant";
 import { LAMBDA_FOLDER_PATH } from "../shared/constant";
 
+// TODO: handle errors with classes from 'shared/error.ts'
 export class ProductServiceDeployment extends Construct {
   productsTable: dynamodb.ITable;
   stocksTable: dynamodb.ITable;
