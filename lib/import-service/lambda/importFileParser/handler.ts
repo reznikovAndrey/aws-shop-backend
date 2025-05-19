@@ -1,13 +1,11 @@
 import { S3Event } from "aws-lambda";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import csvParser from "csv-parser";
-import { getS3Client } from "../shared/utils";
-import { SERVER_ERROR } from "../shared/constant";
 import { Readable } from "node:stream";
+import { getS3Client } from "../../utils";
 
 const client = getS3Client();
 
-// TODO: handling errors
 export async function importFileParser(event: S3Event) {
   try {
     const bucket = event.Records[0].s3.bucket.name;
@@ -24,7 +22,7 @@ export async function importFileParser(event: S3Event) {
 
     const stream = res.Body as Readable;
 
-    new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       stream
         .pipe(csvParser())
         .on("data", (row) => {
@@ -35,12 +33,11 @@ export async function importFileParser(event: S3Event) {
           resolve();
         })
         .on("error", (err) => {
-          console.error("Error while parsing CSV: ", err);
+          console.error("Error while parsing CSV:", err);
           reject(err);
         });
     });
   } catch (err) {
     console.error(err);
-    throw new Error(SERVER_ERROR);
   }
 }
