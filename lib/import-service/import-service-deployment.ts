@@ -139,7 +139,7 @@ export class ImportServiceDeployment extends Construct {
       },
     );
 
-    bucket.grantRead(importFileParserLambda);
+    bucket.grantReadWrite(importFileParserLambda);
     bucket.addEventNotification(
       s3.EventType.OBJECT_CREATED,
       new s3n.LambdaDestination(importFileParserLambda),
