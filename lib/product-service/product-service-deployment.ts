@@ -3,15 +3,17 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
-import { PRODUCT_ID_KEY } from "./constant";
+import { PRODUCT_ID_KEY, SQS_BATCH_SIZE } from "./constant";
 import {
   INVALID_PAYLOAD,
   NOT_FOUND,
   SERVER_ERROR,
 } from "./lambda/shared/constant";
 import { LAMBDA_FOLDER_PATH } from "../shared/constant";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 // TODO: handle errors with classes from 'shared/error.ts'
 // TODO: remove lambda/shared folder
@@ -19,6 +21,7 @@ export class ProductServiceDeployment extends Construct {
   productsTable: dynamodb.ITable;
   stocksTable: dynamodb.ITable;
   api: apigateway.RestApi;
+  sqs: sqs.Queue;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -44,9 +47,16 @@ export class ProductServiceDeployment extends Construct {
       },
     });
 
+    this.sqs = new sqs.Queue(this, "product-service-sqs", {});
+
     const getProductsListLambda = this.createLambda("getProductsList");
     const getProductsByIdLambda = this.createLambda("getProductsById");
     const createProductLambda = this.createLambda("createProduct");
+    const catalogBatchProcessLambda = this.createLambda("catalogBatchProcess");
+
+    catalogBatchProcessLambda.addEventSource(
+      new SqsEventSource(this.sqs, { batchSize: SQS_BATCH_SIZE }),
+    );
 
     const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
       getProductsListLambda,
