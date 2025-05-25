@@ -3,6 +3,8 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambdaNodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as sns from "aws-cdk-lib/aws-sns";
+import * as snsSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
 import { PRODUCT_ID_KEY, SQS_BATCH_SIZE } from "./constant";
@@ -21,6 +23,7 @@ export class ProductServiceDeployment extends Construct {
   productsTable: dynamodb.ITable;
   stocksTable: dynamodb.ITable;
   api: apigateway.RestApi;
+  topic: sns.Topic;
 
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id);
@@ -46,6 +49,8 @@ export class ProductServiceDeployment extends Construct {
       },
     });
 
+    this.configureSNSTopic();
+
     const getProductsListLambda = this.createLambda("getProductsList");
     const getProductsByIdLambda = this.createLambda("getProductsById");
     const createProductLambda = this.createLambda("createProduct");
@@ -54,6 +59,7 @@ export class ProductServiceDeployment extends Construct {
     catalogBatchProcessLambda.addEventSource(
       new SqsEventSource(props.queue, { batchSize: SQS_BATCH_SIZE }),
     );
+    this.topic.grantPublish(catalogBatchProcessLambda);
 
     const getProductsListLambdaIntegration = new apigateway.LambdaIntegration(
       getProductsListLambda,
@@ -146,6 +152,16 @@ export class ProductServiceDeployment extends Construct {
     });
   }
 
+  private configureSNSTopic() {
+    this.topic = new sns.Topic(this, "product-service-sns-topic", {
+      displayName: "Product Service Topic",
+    });
+
+    this.topic.addSubscription(
+      new snsSubscriptions.EmailSubscription(process.env.EMAIL as string),
+    );
+  }
+
   private createLambda(name: string) {
     const lambdaFn = new lambdaNodejs.NodejsFunction(this, name, {
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -156,6 +172,7 @@ export class ProductServiceDeployment extends Construct {
       environment: {
         PRODUCTS_TABLE_NAME: process.env.PRODUCTS_TABLE_NAME as string,
         STOCKS_TABLE_NAME: process.env.STOCKS_TABLE_NAME as string,
+        TOPIC_ARN: this.topic.topicArn,
       },
     });
 

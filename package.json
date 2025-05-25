@@ -14,7 +14,6 @@
     "deploy:product-service": "cdk deploy ProductServiceStack",
     "deploy:import-service": "cdk deploy ImportServiceStack",
     "deploy:shared": "cdk deploy SharedInfraStack"
-
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -31,6 +30,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.799.0",
     "@aws-sdk/client-s3": "^3.812.0",
+    "@aws-sdk/client-sns": "^3.817.0",
     "@aws-sdk/client-sqs": "^3.812.0",
     "@aws-sdk/s3-request-presigner": "^3.812.0",
     "@types/aws-lambda": "^8.10.149",
