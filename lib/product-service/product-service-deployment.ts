@@ -7,7 +7,11 @@ import * as sns from "aws-cdk-lib/aws-sns";
 import * as snsSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
-import { PRODUCT_ID_KEY, SQS_BATCH_SIZE } from "./constant";
+import {
+  PRICE_TO_DIFFERENTIATE_SUBSCRIPTION,
+  PRODUCT_ID_KEY,
+  SQS_BATCH_SIZE,
+} from "./constant";
 import {
   INVALID_PAYLOAD,
   NOT_FOUND,
@@ -158,7 +162,23 @@ export class ProductServiceDeployment extends Construct {
     });
 
     this.topic.addSubscription(
-      new snsSubscriptions.EmailSubscription(process.env.EMAIL as string),
+      new snsSubscriptions.EmailSubscription(process.env.EMAIL_1 as string, {
+        filterPolicy: {
+          price: sns.SubscriptionFilter.numericFilter({
+            greaterThan: PRICE_TO_DIFFERENTIATE_SUBSCRIPTION,
+          }),
+        },
+      }),
+    );
+
+    this.topic.addSubscription(
+      new snsSubscriptions.EmailSubscription(process.env.EMAIL_2 as string, {
+        filterPolicy: {
+          price: sns.SubscriptionFilter.numericFilter({
+            lessThanOrEqualTo: PRICE_TO_DIFFERENTIATE_SUBSCRIPTION,
+          }),
+        },
+      }),
     );
   }
 

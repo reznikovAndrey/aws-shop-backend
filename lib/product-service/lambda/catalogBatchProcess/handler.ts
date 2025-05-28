@@ -9,7 +9,20 @@ export async function catalogBatchProcess(e: SQSEvent) {
   const results = await Promise.allSettled(
     e.Records.map(async (record) => {
       const payload = JSON.parse(record.body);
-      return createProduct(payload);
+      const { productId } = await createProduct(payload);
+      const command = new PublishCommand({
+        TopicArn: process.env.TOPIC_ARN,
+        Subject: "Product was created",
+        Message: `Product with next id was created: ${productId}`,
+        MessageAttributes: {
+          price: {
+            DataType: "Number",
+            StringValue: payload.price.toString(),
+          },
+        },
+      });
+      await sns.send(command);
+      return productId;
     }),
   );
 
@@ -19,23 +32,8 @@ export async function catalogBatchProcess(e: SQSEvent) {
         console.log("Failed: ", result.reason);
         break;
       case "fulfilled":
-        console.log("Success: ", result.value.productId);
+        console.log("Success: ", result.value);
         break;
     }
   });
-
-  const createdProducts = results.filter((res) => res.status === "fulfilled");
-  const shouldSendNotification = createdProducts.length;
-
-  if (shouldSendNotification) {
-    const command = new PublishCommand({
-      TopicArn: process.env.TOPIC_ARN,
-      Subject: "Products were created",
-      Message: `Products with next ids were created: ${createdProducts
-        .map((res) => res.value.productId)
-        .join(", ")}`,
-    });
-
-    await sns.send(command);
-  }
 }
