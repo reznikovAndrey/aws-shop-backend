@@ -1,14 +1,12 @@
 import * as cdk from "aws-cdk-lib";
-import * as dotenv from "dotenv";
 import { Construct } from "constructs";
 import { ProductServiceDeployment } from "./product-service-deployment";
-
-dotenv.config();
+import { StackProps } from "../shared/types";
 
 export class ProductServiceStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
-    new ProductServiceDeployment(this, "product-service-deployment");
+    new ProductServiceDeployment(this, "product-service-deployment", props);
   }
 }
