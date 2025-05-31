@@ -11,11 +11,18 @@ import { FILENAME_KEY } from "./constant";
 import { LAMBDA_FOLDER_PATH } from "../shared/constant";
 import { FILES_UPLOAD_DIR_NAME } from "./lambda/importProductsFile/constant";
 import { ApiErrors } from "../shared/error";
+import { StackProps } from "../shared/types";
 
 export class ImportServiceDeployment extends Construct {
   api: apigateway.RestApi;
 
-  constructor(scope: Construct, id: string) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: StackProps & {
+      basicAuthorizer: lambda.IFunction;
+    },
+  ) {
     super(scope, id);
 
     const bucket = new s3.Bucket(this, "import-service-bucket", {
@@ -100,8 +107,34 @@ export class ImportServiceDeployment extends Construct {
         ],
       });
 
+    // const authorizer = new apigateway.TokenAuthorizer(
+    //   this,
+    //   "token-authorizer",
+    //   {
+    //     handler: lambda.Function.fromFunctionAttributes(
+    //       this,
+    //       "imported-authorizer",
+    //       {
+    //         functionArn: cdk.Fn.importValue("BasicAuthorizerFnArn"),
+    //         sameEnvironment: true,
+    //       },
+    //     ),
+    //     identitySource: "method.request.header.Authorization",
+    //   },
+    // );
+
+    const lambdaAuthorizer = new apigateway.TokenAuthorizer(
+      this,
+      "LambdaAuthorizer",
+      {
+        handler: props.basicAuthorizer,
+      },
+    );
+
     const importResource = this.api.root.addResource("import");
     importResource.addMethod("GET", importProductsFileLambdaIntegration, {
+      authorizer: lambdaAuthorizer,
+      authorizationType: apigateway.AuthorizationType.CUSTOM,
       methodResponses: [
         {
           statusCode: "200",
@@ -136,6 +169,9 @@ export class ImportServiceDeployment extends Construct {
           "importFileParser",
           "handler.ts",
         ),
+        environment: {
+          QUEUE_URL: props.queue.queueUrl,
+        },
       },
     );
 
@@ -145,5 +181,7 @@ export class ImportServiceDeployment extends Construct {
       new s3n.LambdaDestination(importFileParserLambda),
       { prefix: `${FILES_UPLOAD_DIR_NAME}/` },
     );
+
+    props.queue.grantSendMessages(importFileParserLambda);
   }
 }

@@ -6,7 +6,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { Readable } from "node:stream";
 import { getS3Client } from "../../utils";
-import { parseFile } from "./utils";
+import { parseFileAndSendMessageToSQS } from "./utils";
 import { FILES_PARSED_DIR_NAME } from "./constant";
 
 const client = getS3Client();
@@ -27,7 +27,7 @@ export async function importFileParser(event: S3Event) {
 
     const stream = res.Body as Readable;
 
-    await parseFile(stream);
+    await parseFileAndSendMessageToSQS(stream);
 
     const targetKey = [
       FILES_PARSED_DIR_NAME,
